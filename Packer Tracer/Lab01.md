@@ -226,3 +226,64 @@ I configured Fa0/5 as a routed port to connect the core switch to EDGE-R1. This 
 I also configured OSPF so CORE-SW1 can advertise all internal VLAN networks and the routed link to the edge router. A default route was added to send unknown traffic toward EDGE-R1.
 
 Finally, I created an ACL to block traffic from the HR VLAN to the Users VLAN. This demonstrates basic internal network segmentation and access control.
+
+---
+
+## BR1-SW1 Configuration 
+
+`BR1-SW1` is the Branch 1 access switch in this lab. I used this switch to connect the Branch 1 PC to VLAN 10 and provide trunk connectivity back to `CORE-SW1`.
+
+### Commands Configured on BR1-SW1
+```cisco
+spanning-tree mode pvst
+spanning-tree extend system-id
+```
+I configured PVST spanning tree mode on the switch. This helps prevent Layer 2 switching loops and allows spanning tree to operate separately for each VLAN.
+
+```cisco
+interface FastEthernet0/1
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+```
+I configured FastEthernet0/1 as an access port for the Branch 1 PC. This port was assigned to VLAN 10, which means any device connected to this port becomes part of the VLAN 10 network.
+
+I also enabled spanning-tree portfast because this port connects to an end device, not another switch. PortFast allows the PC port to come online faster without waiting through the normal spanning tree listening and learning states.
+
+```cisco
+interface FastEthernet0/3
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport mode trunk
+```
+I configured FastEthernet0/3 as a trunk port. This trunk link connects BR1-SW1 back to CORE-SW1.
+
+The trunk allows VLANs 10, 20, 30, 40, 50, and 99 to pass across the link. This allows VLAN traffic from the access switch to reach the core switch for routing and network communication.
+
+```cisco
+interface Vlan1
+ no ip address
+ shutdown
+```
+I shut down VLAN 1 and did not assign it an IP address. This is a good basic practice because VLAN 1 is the default VLAN and should not normally be used for management or user traffic in a better-designed network.
+
+```cisco
+line vty 0 4
+ login
+
+line vty 5 15
+ login
+```
+The VTY lines are present for remote access configuration. In this lab, the VTY lines require login, but no full remote management setup such as SSH was configured yet.
+
+Summary of What I Did on BR1-SW1
+
+On BR1-SW1, I configured the switch as an access switch for Branch 1. The main purpose of this switch is to connect the Branch 1 PC into the correct VLAN and send VLAN traffic back to the core switch.
+
+I assigned FastEthernet0/1 to VLAN 10 for the Branch 1 PC and enabled PortFast so the end device can connect quickly. I then configured FastEthernet0/3 as a trunk port to carry multiple VLANs between BR1-SW1 and CORE-SW1.
+
+This switch does not perform routing. Instead, it forwards VLAN traffic to CORE-SW1, where inter-VLAN routing is handled using the VLAN interfaces configured on the core switch.
+
+---
+
+
+
