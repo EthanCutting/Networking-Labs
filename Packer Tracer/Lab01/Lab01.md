@@ -430,4 +430,108 @@ SERVER-SW1 does not perform routing. It forwards server VLAN traffic at Layer 2,
 
 
 ---
+## EDGE-R1 Configuration
+`EDGE-R1` is the edge router in this lab. I used this router to connect the internal enterprise network to the simulated ISP/internet network. This router handles NAT/PAT, OSPF routing with `CORE-SW1`, and default routing toward the ISP.
+
+### Commands Configured on EDGE-R1
+
+```cisco
+ip cef
+no ipv6 cef
+```
+I left Cisco Express Forwarding enabled for IPv4. This helps the router forward packets more efficiently. IPv6 CEF was disabled because this lab was focused on IPv4 networking.
+
+```cisco
+interface GigabitEthernet0/0
+ ip address 203.0.113.2 255.255.255.252
+ ip nat outside
+ duplex auto
+ speed auto
+```
+I configured GigabitEthernet0/0 as the outside interface. This interface connects from EDGE-R1 to the ISP router.
+
+The IP address 203.0.113.2/30 is used on the WAN link between EDGE-R1 and ISP-R1.
+
+I also configured this interface as ip nat outside because it faces the external network.
+
+```cisco
+interface GigabitEthernet0/1
+ ip address 10.0.0.1 255.255.255.252
+ ip nat inside
+ duplex auto
+ speed auto
+```
+I configured GigabitEthernet0/1 as the inside interface. This interface connects from EDGE-R1 to CORE-SW1.
+
+The IP address 10.0.0.1/30 is used on the point-to-point link between the edge router and the core switch.
+
+I also configured this interface as ip nat inside because it faces the internal private network.
+
+```cisco
+router ospf 1
+ router-id 2.2.2.2
+ log-adjacency-changes
+ network 10.0.0.0 0.0.0.3 area 0
+```
+I configured OSPF on EDGE-R1 using process ID 1.
+
+The router ID is set to 2.2.2.2, which makes the router easier to identify in OSPF neighbour outputs.
+
+I advertised the 10.0.0.0/30 network into OSPF so EDGE-R1 can form an OSPF neighbour relationship with CORE-SW1.
+
+```cisco
+ip nat inside source list 1 interface GigabitEthernet0/0 overload
+```
+I configured NAT overload, also known as PAT.
+
+This allows multiple internal private IP addresses to share the outside IP address of GigabitEthernet0/0.
+
+In this lab, internal VLAN devices can use NAT/PAT to access the simulated internet server.
+
+```cisco
+ip route 0.0.0.0 0.0.0.0 203.0.113.1
+```
+I configured a default route pointing to the ISP router at 203.0.113.1.
+
+This means any traffic that EDGE-R1 does not have a specific route for will be sent toward ISP-R1.
+
+```cisco
+access-list 1 permit 192.168.10.0 0.0.0.255
+access-list 1 permit 192.168.20.0 0.0.0.255
+access-list 1 permit 192.168.30.0 0.0.0.255
+access-list 1 permit 192.168.40.0 0.0.0.255
+access-list 1 permit 192.168.50.0 0.0.0.255
+access-list 1 permit 192.168.99.0 0.0.0.255
+```
+I created standard ACL 1 to define which internal networks are allowed to use NAT.
+
+This ACL permits the internal VLAN networks:
+
+VLAN	Network
+VLAN 10	192.168.10.0/24
+VLAN 20	192.168.20.0/24
+VLAN 30	192.168.30.0/24
+VLAN 40	192.168.40.0/24
+VLAN 50	192.168.50.0/24
+VLAN 99	192.168.99.0/24
+
+These permitted networks are then translated using the NAT overload command.
+
+
+Summary of What I Did on EDGE-R1
+
+On EDGE-R1, I configured the router to act as the boundary between the internal network and the simulated ISP network.
+
+I configured GigabitEthernet0/1 as the inside interface connected to CORE-SW1 using the 10.0.0.0/30 network. I configured GigabitEthernet0/0 as the outside interface connected to ISP-R1 using the 203.0.113.0/30 network.
+
+I configured OSPF so EDGE-R1 could form a routing neighbour relationship with CORE-SW1. This allows the edge router and core switch to exchange routing information.
+
+I also configured NAT/PAT overload so the internal VLAN networks can access the simulated internet using the outside IP address of EDGE-R1.
+
+Finally, I added a default route to send unknown traffic toward the ISP router
+
+
+---
+## ISP-R1 Configuration
+
 
