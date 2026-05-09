@@ -284,6 +284,150 @@ I assigned FastEthernet0/1 to VLAN 10 for the Branch 1 PC and enabled PortFast s
 This switch does not perform routing. Instead, it forwards VLAN traffic to CORE-SW1, where inter-VLAN routing is handled using the VLAN interfaces configured on the core switch.
 
 ---
+## BR2-SW1 Configuration
+
+`BR2-SW1` is the Branch 2 access switch in this lab. I used this switch to connect the Branch 2 PC to VLAN 30 and provide trunk connectivity back to the core switch.
+
+### Commands Configured on BR2-SW1
+
+```cisco
+spanning-tree mode pvst
+spanning-tree extend system-id
+```
+I configured PVST spanning tree mode on BR2-SW1. This helps prevent Layer 2 loops in the switching network and allows spanning tree to operate per VLAN.
 
 
+```cisco
+interface FastEthernet0/1
+ switchport access vlan 30
+ switchport mode access
+ spanning-tree portfast
+```
+I configured FastEthernet0/1 as an access port for the Branch 2 PC. This port was assigned to VLAN 30, meaning the connected PC becomes part of the VLAN 30 network.
+
+I also enabled spanning-tree portfast because this port connects to an end device. PortFast allows the PC to connect faster without waiting through the normal spanning tree startup process.
+
+
+```cisco
+interface FastEthernet0/3
+ switchport trunk allowed vlan 30,40,99
+ switchport mode trunk
+```
+I configured FastEthernet0/3 as a trunk port. This trunk only allows VLANs 30, 40, and 99 across the link.
+
+This is useful when I only want specific VLANs to travel over a trunk instead of allowing every VLAN.
+
+```cisco
+interface FastEthernet0/4
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport mode trunk
+```
+I configured FastEthernet0/4 as another trunk port. This trunk allows VLANs 10, 20, 30, 40, 50, and 99 to pass across the link.
+
+This allows BR2-SW1 to carry traffic for multiple VLANs back toward the core switch.
+
+```cisco
+interface Vlan1
+ no ip address
+ shutdown
+```
+I shut down VLAN 1 and did not assign it an IP address. VLAN 1 is the default VLAN, so I avoided using it for normal user or management traffic.
+
+```cisco
+line vty 0 4
+ login
+
+line vty 5 15
+ login
+```
+The VTY lines are present for remote access. In this lab, remote login lines exist, but SSH or Telnet management was not fully configured yet.
+
+Summary of What I Did on BR2-SW1
+
+On BR2-SW1, I configured the switch as an access switch for Branch 2. The main role of this switch is to connect the Branch 2 PC into VLAN 30 and forward VLAN traffic back toward CORE-SW1.
+
+I assigned FastEthernet0/1 to VLAN 30 for the Branch 2 PC and enabled PortFast so the PC port can come online quickly.
+
+I also configured two trunk ports. FastEthernet0/3 allows VLANs 30, 40, and 99, while FastEthernet0/4 allows VLANs 10, 20, 30, 40, 50, and 99. These trunk links allow VLAN traffic to move between the branch switch and the rest of the network.
+
+BR2-SW1 does not perform routing. It forwards traffic at Layer 2, while CORE-SW1 handles inter-VLAN routing using the VLAN interfaces.
+
+---
+## SERVER-SW1 Configuration
+
+`SERVER-SW1` is the server access switch in this lab. I used this switch to connect the internal LAN server to VLAN 50 and provide redundant trunk connectivity back to `CORE-SW1` using EtherChannel.
+
+### Commands Configured on SERVER-SW1
+
+```cisco
+spanning-tree mode pvst
+spanning-tree extend system-id
+```
+I configured PVST spanning tree mode on SERVER-SW1. This helps prevent Layer 2 switching loops and allows spanning tree to operate separately for each VLAN.
+
+```cisco
+interface FastEthernet0/1
+ switchport access vlan 50
+ switchport mode access
+ spanning-tree portfast
+```
+I configured FastEthernet0/1 as an access port for the internal LAN server. This port was assigned to VLAN 50, which is the server VLAN in this lab.
+
+I also enabled spanning-tree portfast because this port connects to an end device, not another switch. This allows the server port to come online faster.
+
+```cisco
+interface FastEthernet0/23
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport mode trunk
+ channel-group 1 mode active
+
+interface FastEthernet0/24
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport mode trunk
+ channel-group 1 mode active
+```
+I configured FastEthernet0/23 and FastEthernet0/24 as trunk ports and added them to EtherChannel group 1 using LACP active mode.
+
+This combines the two physical links into one logical connection, giving the server switch a more reliable uplink back to the core switch.
+
+```cisco
+interface Port-channel1
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport mode trunk
+```
+I configured Port-channel1 as the logical EtherChannel trunk interface. This port-channel carries VLANs 10, 20, 30, 40, 50, and 99 between SERVER-SW1 and CORE-SW1.
+
+The physical links Fa0/23 and Fa0/24 are bundled into this one logical interface.
+
+
+```cisco
+interface Vlan1
+ no ip address
+ shutdown
+```
+I shut down VLAN 1 and did not assign it an IP address. VLAN 1 is the default VLAN, so I avoided using it for server or management traffic.
+
+```cisco
+line vty 0 4
+ login
+
+line vty 5 15
+ login
+```
+The VTY lines are present for remote access. In this lab, the lines require login, but full SSH or Telnet management was not configured yet.
+
+Summary of What I Did on SERVER-SW1
+
+On SERVER-SW1, I configured the switch to act as the access switch for the internal server network.
+
+I assigned FastEthernet0/1 to VLAN 50 so the LAN server is placed into the correct server VLAN. I enabled PortFast on this port because it connects directly to an end device.
+
+I also configured FastEthernet0/23 and FastEthernet0/24 as trunk ports and bundled them into Port-channel1 using EtherChannel. This provides a stronger and more redundant uplink between SERVER-SW1 and CORE-SW1.
+
+The port-channel trunk allows VLANs 10, 20, 30, 40, 50, and 99 to pass between the server switch and the core switch.
+
+SERVER-SW1 does not perform routing. It forwards server VLAN traffic at Layer 2, while CORE-SW1 handles routing between VLANs using its VLAN interfaces.
+
+
+---
 
