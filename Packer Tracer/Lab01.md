@@ -71,4 +71,36 @@ The lab includes VLANs, VTP, trunking, EtherChannel, inter-VLAN routing, OSPF, d
 
 ---
 
+## Device Configuration Summary 
+This section explains what I configured on each switch and router in the lab, and what role each device has in the network.
 
+---
+
+# Switch Configuration 
+
+## CORE-SW1 Configuration 
+`CORE-SW1` is the main Layer 3 switch in this lab. I used it as the central switch for VLAN routing, trunking, EtherChannel, OSPF, and forwarding traffic toward the edge router.
+
+### Commands Configured on CORE-SW1  
+```cisco
+ip routing
+```
+I enabled ip routing so the multilayer switch could route traffic between VLANs. This allows devices in different VLANs, such as VLAN 10 and VLAN 30, to communicate through their default gateways on CORE-SW1.
+
+```cisco
+spanning-tree mode pvst
+```
+I used PVST spanning tree mode to help prevent Layer 2 loops in the switched network. This is useful when multiple switches and trunk links are used.
+
+```cisco
+interface FastEthernet0/3
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+
+interface FastEthernet0/4
+ switchport trunk allowed vlan 10,20,30,40,50,99
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+```
+I configured Fa0/3 and Fa0/4 as trunk ports. These links carry multiple VLANs between CORE-SW1 and the branch/access switches. I also limited the trunk to only allow VLANs 10, 20, 30, 40, 50, and 99.
