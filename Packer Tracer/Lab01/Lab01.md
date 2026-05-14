@@ -534,4 +534,51 @@ Finally, I added a default route to send unknown traffic toward the ISP router
 ---
 ## ISP-R1 Configuration
 
+`ISP-R1` is the simulated internet service provider router in this lab. I used this router to connect `EDGE-R1` to the external simulated internet/server network.
 
+This router does not run OSPF or NAT in this lab. Its main job is to provide an external network for testing internet connectivity from the internal VLANs.
+
+---
+
+I left Cisco Express Forwarding enabled for IPv4. This helps the router forward packets efficiently. IPv6 was not used in this lab, so IPv6 CEF was disabled.
+
+
+```cisco
+interface GigabitEthernet0/0
+ ip address 203.0.113.1 255.255.255.252
+ duplex auto
+ speed auto
+```
+I configured GigabitEthernet0/0 as the WAN-facing interface toward EDGE-R1.
+
+This interface uses the IP address 203.0.113.1/30. The other side of this link is EDGE-R1, which uses 203.0.113.2/30.
+
+This point-to-point link allows the enterprise edge router to send traffic toward the simulated ISP.
+
+
+```cisco
+interface GigabitEthernet0/1
+ ip address 8.8.8.1 255.255.255.0
+ duplex auto
+ speed auto
+```
+I configured GigabitEthernet0/1 as the interface facing the simulated internet/server network.
+
+This interface uses the IP address 8.8.8.1/24 and acts as the default gateway for the internet server.
+
+```cisco
+interface Vlan1
+ no ip address
+ shutdown
+```
+VLAN 1 was not used on this router, so it has no IP address and is shut down.
+
+Summary of What I Did on ISP-R1
+
+On ISP-R1, I configured the router to act as the simulated ISP for the lab.
+
+I configured GigabitEthernet0/0 with the IP address 203.0.113.1/30 to connect to EDGE-R1. This provides the WAN link between the internal enterprise network and the ISP router.
+
+I configured GigabitEthernet0/1 with the IP address 8.8.8.1/24 to connect to the simulated internet server network. The internet server uses 8.8.8.1 as its default gateway.
+
+This router allows me to test whether internal VLAN clients can reach an external network through CORE-SW1, EDGE-R1, NAT/PAT, and then out to the simulated internet server.
