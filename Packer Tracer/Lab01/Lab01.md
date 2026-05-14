@@ -582,3 +582,123 @@ I configured GigabitEthernet0/0 with the IP address 203.0.113.1/30 to connect to
 I configured GigabitEthernet0/1 with the IP address 8.8.8.1/24 to connect to the simulated internet server network. The internet server uses 8.8.8.1 as its default gateway.
 
 This router allows me to test whether internal VLAN clients can reach an external network through CORE-SW1, EDGE-R1, NAT/PAT, and then out to the simulated internet server.
+
+---
+
+## Server Configuration
+
+This lab uses two servers:
+
+| Server | Purpose |
+|---|---|
+| LAN-SRV1 | Internal LAN server on VLAN 50 |
+| INET-SRV | Simulated internet server |
+
+Both servers were configured with static IP addresses so they could be used for testing internal and external network connectivity.
+
+---
+
+# LAN-SRV1 Configuration
+
+`LAN-SRV1` is the internal server in the enterprise network. I connected this server to `SERVER-SW1` and placed it in VLAN 50.
+
+VLAN 50 is used as the server VLAN in this lab.
+
+---
+
+### IP Settings Configured on LAN-SRV1
+
+| Setting | Value |
+|---|---|
+| IPv4 Address | 192.168.50.10 |
+| Subnet Mask | 255.255.255.0 |
+| Default Gateway | 192.168.50.1 |
+| DNS Server | 192.168.50.10 |
+
+---
+
+### What I Configured on LAN-SRV1
+
+I configured `LAN-SRV1` with a static IP address of `192.168.50.10/24`.
+
+The default gateway is `192.168.50.1`, which is the VLAN 50 interface on `CORE-SW1`.
+
+This means that when the server needs to communicate outside of VLAN 50, it sends traffic to `CORE-SW1`, which handles inter-VLAN routing.
+
+The DNS server was set to `192.168.50.10`, meaning the server can also be used as an internal DNS server if DNS services are enabled later.
+
+---
+
+### LAN-SRV1 Role in the Network
+
+| Item | Purpose |
+|---|---|
+| LAN-SRV1 | Internal enterprise server |
+| VLAN | VLAN 50 |
+| IP Address | 192.168.50.10 |
+| Gateway | CORE-SW1 VLAN 50 SVI |
+| Connected Switch | SERVER-SW1 |
+
+---
+
+### Explanation
+
+`LAN-SRV1` represents an internal company server. It could be used for internal services such as DNS, file sharing, web hosting, or application hosting.
+
+In this lab, I used it mainly to test VLAN 50 connectivity and confirm that devices from other VLANs could route to the server through `CORE-SW1`.
+
+---
+
+# INET-SRV Configuration
+
+`INET-SRV` is the simulated internet server in this lab. I used this server to test whether internal VLAN devices could reach an external network through `CORE-SW1`, `EDGE-R1`, NAT/PAT, and `ISP-R1`.
+
+---
+
+### IP Settings Configured on INET-SRV
+
+| Setting | Value |
+|---|---|
+| IPv4 Address | 8.8.8.8 |
+| Subnet Mask | 255.255.255.0 |
+| Default Gateway | 8.8.8.1 |
+| DNS Server | 8.8.8.8 |
+
+---
+
+### What I Configured on INET-SRV
+
+I configured `INET-SRV` with a static IP address of `8.8.8.8/24`.
+
+The default gateway is `8.8.8.1`, which is the interface on `ISP-R1` connected to the simulated internet/server network.
+
+The DNS server was also set to `8.8.8.8`, allowing this server to represent a public DNS/internet server in the Packet Tracer lab.
+
+---
+
+### INET-SRV Role in the Network
+
+| Item | Purpose |
+|---|---|
+| INET-SRV | Simulated internet server |
+| IP Address | 8.8.8.8 |
+| Gateway | ISP-R1 G0/1 |
+| Connected Router | ISP-R1 |
+| Purpose | Test external connectivity and NAT/PAT |
+
+---
+
+### Explanation
+
+`INET-SRV` represents an external internet server. Internal devices should be able to reach this server only after traffic travels through the full network path.
+
+The traffic path is:
+
+```text
+PC / LAN Device
+→ Access Switch
+→ CORE-SW1
+→ EDGE-R1
+→ ISP-R1
+→ INET-SRV
+
